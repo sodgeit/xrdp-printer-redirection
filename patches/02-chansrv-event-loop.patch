@@ -1,0 +1,34 @@
+--- a/sesman/chansrv/chansrv.c	2023-12-30 15:33:58.000000000 +0000
++++ b/sesman/chansrv/chansrv.c	2026-06-05 10:57:44.066820309 +0000
+@@ -31,6 +31,7 @@
+ #include "sound.h"
+ #include "clipboard.h"
+ #include "devredir.h"
++#include "devredir_printer.h"
+ #include "list.h"
+ #include "file.h"
+ #include "log.h"
+@@ -1411,6 +1412,7 @@
+         num_objs++;
+         trans_get_wait_objs(g_lis_trans, objs, &num_objs);
+         trans_get_wait_objs(g_api_lis_trans, objs, &num_objs);
++        devredir_printer_get_wait_objs(objs, &num_objs, &timeout);
+ 
+         //g_writeln("timeout %d", timeout);
+         while (g_obj_wait(objs, num_objs, wobjs, num_wobjs, timeout) == 0)
+@@ -1471,6 +1473,7 @@
+             sound_check_wait_objs();
+             devredir_check_wait_objs();
+             xfuse_check_wait_objs();
++            devredir_printer_check_wait_objs();
+             timeout = -1;
+             num_objs = 0;
+             num_wobjs = 0;
+@@ -1490,6 +1493,7 @@
+             sound_get_wait_objs(objs, &num_objs, &timeout);
+             devredir_get_wait_objs(objs, &num_objs, &timeout);
+             xfuse_get_wait_objs(objs, &num_objs, &timeout);
++            devredir_printer_get_wait_objs(objs, &num_objs, &timeout);
+             get_timeout(&timeout);
+         } /* end while (g_obj_wait(objs, num_objs, 0, 0, timeout) == 0) */
+     }

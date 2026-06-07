@@ -1,0 +1,52 @@
+#
+# Per-session CUPS instance for xrdp printer redirection.
+# Generated at runtime — do not edit manually.
+#
+# This minimal cupsd serves only the xrdp session.
+# Applications in the session connect via CUPS_SERVER=@SOCKET_PATH@
+#
+
+LogLevel warn
+MaxLogSize 1m
+ErrorPolicy retry-job
+
+# Run as the session user (not root)
+RunAsUser Yes
+
+# Listen only on the per-session Unix socket
+Listen @SOCKET_PATH@
+
+# No network browsing or sharing
+Browsing Off
+BrowseLocalProtocols none
+
+# No web interface needed
+WebInterface No
+
+# No authentication required (socket peer creds are sufficient)
+DefaultAuthType None
+
+# Never exit when idle — stay alive for the session duration
+IdleExitTimeout 0
+
+# Permissive policy — session user has full control
+<Location />
+  Order allow,deny
+  Allow all
+</Location>
+
+<Location /admin>
+  Order allow,deny
+  Allow all
+</Location>
+
+<Policy default>
+  JobPrivateAccess default
+  JobPrivateValues default
+  SubscriptionPrivateAccess default
+  SubscriptionPrivateValues default
+
+  <Limit All>
+    Order deny,allow
+  </Limit>
+</Policy>

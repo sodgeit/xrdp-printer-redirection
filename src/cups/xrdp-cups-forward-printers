@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# Forward system printers into the per-session CUPS instance.
+# Called by chansrv after starting the per-session cupsd.
+#
+# Usage: xrdp-cups-forward-printers <system_cups_socket> <display_num>
+#
+# CUPS_SERVER must already be set to the per-session socket.
+#
+
+SYSTEM_SOCK="$1"
+DISPLAY_NUM="$2"
+
+if [ -z "$SYSTEM_SOCK" ] || [ -z "$DISPLAY_NUM" ]; then
+    echo "Usage: $0 <system_cups_socket> <display_num>" >&2
+    exit 1
+fi
+
+if [ ! -S "$SYSTEM_SOCK" ]; then
+    # System CUPS not available
+    exit 0
+fi
+
+# Query system CUPS for printer list (force English output)
+# Format: "device for <name>: <uri>"
+LC_ALL=C CUPS_SERVER="$SYSTEM_SOCK" lpstat -v 2>/dev/null | while IFS= read -r line; do
+    queue=$(echo "$line" | sed -n 's/^device for \([^:]*\):.*/\1/p')
+    uri=$(echo "$line" | sed -n 's/^device for [^:]*: *//p')
+
+    # Skip xrdp queues (don't forward our own printers)
+    case "$queue" in
+        xrdp_*) continue ;;
+    esac
+
+    # Skip if empty
+    [ -z "$queue" ] && continue
+    [ -z "$uri" ] && continue
+
+    # Create the printer in our per-session instance as an IPP relay
+    # pointing to the system CUPS instance
+    lpadmin -p "$queue" \
+        -v "ipp://localhost/printers/$queue" \
+        -o printer-is-shared=false \
+        -E 2>/dev/null
+
+    # Copy the description from system CUPS if available
+    desc=$(LC_ALL=C CUPS_SERVER="$SYSTEM_SOCK" lpoptions -p "$queue" 2>/dev/null | \
+           sed -n 's/.*printer-info=\([^ ]*\).*/\1/p')
+    if [ -n "$desc" ]; then
+        lpadmin -p "$queue" -D "$desc" 2>/dev/null
+    fi
+done
+
+exit 0

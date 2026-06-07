@@ -1,0 +1,97 @@
+--- a/sesman/chansrv/chansrv_config.h
++++ b/sesman/chansrv/chansrv_config.h
+@@ -44,6 +44,11 @@
+ 
+     /** Whether to use nautilus3-compatible file lists for the clipboard */
+     int use_nautilus3_flist_format;
++
++    /** Whether printer redirection is enabled */
++    int enable_printer_redir;
++    /** Whether to run a per-session cupsd (vs using system cupsd) */
++    int enable_per_session_cupsd;
+ };
+ 
+ 
+--- a/sesman/chansrv/chansrv_config.c
++++ b/sesman/chansrv/chansrv_config.c
+@@ -44,6 +44,8 @@
+ #define DEFAULT_ENABLE_FUSE_MOUNT           1
+ #define DEFAULT_FUSE_MOUNT_NAME             "xrdp-client"
+ #define DEFAULT_FILE_UMASK                  077
++#define DEFAULT_ENABLE_PRINTER_REDIR        1
++#define DEFAULT_ENABLE_PER_SESSION_CUPSD    1
+ #define DEFAULT_USE_NAUTILUS3_FLIST_FORMAT  0
+ /**
+  * Type used for passing a logging function about
+@@ -229,6 +231,14 @@
+         {
+             cfg->use_nautilus3_flist_format = g_text2bool(value);
+         }
++        else if (g_strcasecmp(name, "EnablePrinterRedirection") == 0)
++        {
++            cfg->enable_printer_redir = g_text2bool(value);
++        }
++        else if (g_strcasecmp(name, "EnablePerSessionCupsd") == 0)
++        {
++            cfg->enable_per_session_cupsd = g_text2bool(value);
++        }
+     }
+ 
+     return error;
+@@ -253,6 +263,8 @@
+         cfg->restrict_inbound_clipboard = DEFAULT_RESTRICT_INBOUND_CLIPBOARD;
+         cfg->fuse_mount_name = fuse_mount_name;
+         cfg->file_umask = DEFAULT_FILE_UMASK;
++        cfg->enable_printer_redir = DEFAULT_ENABLE_PRINTER_REDIR;
++        cfg->enable_per_session_cupsd = DEFAULT_ENABLE_PER_SESSION_CUPSD;
+         cfg->use_nautilus3_flist_format = DEFAULT_USE_NAUTILUS3_FLIST_FORMAT;
+     }
+ 
+--- a/sesman/sesman.ini
++++ b/sesman/sesman.ini
+@@ -147,6 +147,15 @@
+ ; and up, and you wish to cut-paste files between Nautilus and Windows. Do
+ ; not use this setting for GNOME 4, or other file managers
+ #UseNautilus3FlistFormat=true
++; Enable or disable printer redirection entirely.
++; Type: boolean
++; Default: true
++#EnablePrinterRedirection=true
++; Run a per-session cupsd for printer isolation.
++; If false, printers are created on the system cupsd (requires lpadmin group).
++; Type: boolean
++; Default: true
++#EnablePerSessionCupsd=true
+ 
+ [ChansrvLogging]
+ ; Note: one log file is created per display and the LogFile config value
+--- a/docs/man/sesman.ini.5.in
++++ b/docs/man/sesman.ini.5.in
+@@ -355,6 +355,27 @@
+ This setting will be removed in a later version of xrdp, when GNOME 3 is
+ no longer supported.
+ 
++.TP
++\fBEnablePrinterRedirection\fR=\fI[true|false]\fR
++Defaults to \fItrue\fR.
++Enable or disable RDP printer redirection. When enabled, printers
++announced by the RDP client are made available as CUPS queues in the
++session. Set to \fIfalse\fR to completely disable printer redirection.
++
++.TP
++\fBEnablePerSessionCupsd\fR=\fI[true|false]\fR
++Defaults to \fItrue\fR.
++When \fItrue\fR, each session runs its own private \fBcupsd\fR instance.
++This provides full isolation between users, stable queue names (user
++preferences like paper size persist across sessions), and requires no
++special group membership.
++.P
++.RS
++When set to \fIfalse\fR, redirected printers are created on the system
++\fBcupsd\fR. The session user must be a member of the \fBlpadmin\fR group.
++Queue names include the display number to avoid conflicts between sessions.
++.RE
++
+ .SH "SESSIONS VARIABLES"
+ All entries in the \fB[SessionVariables]\fR section are set as
+ environment variables in the user's session.

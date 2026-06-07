@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Remove all stale xrdp printer queues.
+# Runs at xrdp service start to clean up leftovers from previous
+# sessions (crashes, reboots, unclean shutdowns).
+#
+# Installed as: /usr/share/xrdp/xrdp-printer-cleanup
+# Called from:  ExecStartPre in xrdp.service drop-in
+#
+
+# Wait up to 30 seconds for CUPS scheduler to become available.
+# Use LC_ALL=C so lpstat output is always English ("running").
+attempts=0
+while [ $attempts -lt 60 ]; do
+    LC_ALL=C lpstat -r 2>/dev/null | grep -qi "running" && break
+    sleep 0.5
+    attempts=$((attempts + 1))
+done
+
+LC_ALL=C lpstat -v 2>/dev/null | while IFS= read -r line; do
+    # Format: "device for <name>: <uri>"
+    queue=$(echo "$line" | sed -n 's/^device for \([^:]*\):.*/\1/p')
+    case "$queue" in
+        xrdp_*)
+            lpadmin -x "$queue" 2>/dev/null
+            ;;
+    esac
+done
+
+exit 0

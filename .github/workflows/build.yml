@@ -1,0 +1,55 @@
+name: Build xrdp .deb package
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable deb-src repositories
+        run: |
+          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get update
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get build-dep -y xrdp
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            devscripts \
+            dpkg-dev \
+            fakeroot \
+            debhelper \
+            quilt \
+            libcups2-dev
+
+      - name: Fetch xrdp source package
+        run: |
+          sudo mkdir -p /usr/src/xrdp
+          cd /usr/src/xrdp
+          sudo apt-get source xrdp
+          sudo chown -R $(id -u):$(id -g) /usr/src/xrdp
+
+      - name: Build .deb package
+        run: bash scripts/build-deb.sh
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Run integration tests
+        run: bash tests/test_deb_package.sh
+
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xrdp-printer-redirection-deb
+          path: build_deb/xrdp_0.9.24-*.deb
+          if-no-files-found: error

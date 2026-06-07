@@ -1,0 +1,27 @@
+#
+# Per-session CUPS file paths for xrdp printer redirection.
+# Generated at runtime — do not edit manually.
+#
+
+# Per-session directories
+ServerRoot @STATE_DIR@
+StateDir @STATE_DIR@/state
+CacheDir @STATE_DIR@/cache
+RequestRoot @STATE_DIR@/spool
+TempDir @STATE_DIR@/tmp
+
+# Use system-wide binaries and data
+ServerBin /usr/lib/cups
+DataDir /usr/share/cups
+
+# Run as session user (cupsd uses RunAsUser Yes)
+User @USER@
+Group @GROUP@
+
+# System group for admin operations
+SystemGroup lpadmin
+
+# Log to per-session directory
+AccessLog @STATE_DIR@/log/access_log
+ErrorLog @STATE_DIR@/log/error_log
+PageLog @STATE_DIR@/log/page_log

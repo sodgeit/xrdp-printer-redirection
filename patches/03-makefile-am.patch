@@ -1,0 +1,21 @@
+--- a/sesman/chansrv/Makefile.am	2023-12-30 15:33:58.000000000 +0000
++++ b/sesman/chansrv/Makefile.am	2026-06-05 10:52:23.388989780 +0000
+@@ -60,6 +60,18 @@
+   clipboard_file.h \
+   devredir.c \
+   devredir.h \
++  devredir_printer.c \
++  devredir_printer.h \
++  printer/printer.c \
++  printer/printer.h \
++  printer/printer_cups.c \
++  printer/printer_cups.h \
++  printer/printer_cups_session.c \
++  printer/printer_cups_session.h \
++  printer/printer_socket.c \
++  printer/printer_socket.h \
++  printer/printer_xps.c \
++  printer/printer_xps.h \
+   fifo.c \
+   fifo.h \
+   irp.c \

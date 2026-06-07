@@ -1,0 +1,18 @@
+# Build artifacts
+*.o
+*.a
+xrdp-printer
+
+# Build directories
+xrdp_source/
+build_deb/
+
+# Editor / IDE
+.vscode/
+*.swp
+*~
+
+# Debian packaging artifacts
+*.deb
+*.buildinfo
+*.changes
